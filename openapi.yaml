@@ -1,0 +1,679 @@
+openapi: 3.1.0
+info:
+  title: Proposal Workflow API
+  version: 1.0.0
+  description: >
+    Draft API for project proposal workflow with initial proposal generation,
+    Teams collaboration session, SME commands, proposal versioning, and finalization.
+servers:
+  - url: /api
+tags:
+  - name: Projects
+  - name: Proposals
+  - name: Teams
+  - name: Commands
+  - name: Events
+
+paths:
+  /projects:
+    get:
+      tags: [Projects]
+      summary: List projects and proposal summaries
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Status'
+      responses:
+        '200':
+          description: Projects listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListProjectsResponse'
+    post:
+      tags: [Projects]
+      summary: Create project and start initial proposal workflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '202':
+          description: Project accepted for async processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateProjectResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /projects/{id}:
+    get:
+      tags: [Projects]
+      summary: Get project details and status
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetProjectResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /projects/{id}/proposals:
+    get:
+      tags: [Proposals]
+      summary: List proposal versions for a project
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Proposal versions listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListProposalsResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /projects/{id}/proposals/{version}:
+    get:
+      tags: [Proposals]
+      summary: Get a specific proposal version
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/ProposalVersion'
+      responses:
+        '200':
+          description: Proposal details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetProposalResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /projects/{id}/teams:
+    post:
+      tags: [Teams]
+      summary: Create Teams session and seed context
+      description: Idempotent endpoint; returns existing session when already created.
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTeamsSessionRequest'
+      responses:
+        '201':
+          description: Teams session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTeamsSessionResponse'
+        '200':
+          description: Teams session already exists (idempotent)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTeamsSessionResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '502':
+          $ref: '#/components/responses/ErrorResponse'
+    get:
+      tags: [Teams]
+      summary: Get Teams session status for a project
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Teams session details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTeamsSessionResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /projects/{id}/commands/ask:
+    post:
+      tags: [Commands]
+      summary: Ask clarifying question with project and corpus context
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskCommandRequest'
+      responses:
+        '200':
+          description: Answer generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AskCommandResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /projects/{id}/commands/generate-proposal:
+    post:
+      tags: [Commands]
+      summary: Generate new proposal version from existing versions
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateProposalRequest'
+      responses:
+        '202':
+          description: Generation job queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandJobResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /projects/{id}/commands/finalize-proposal:
+    post:
+      tags: [Commands]
+      summary: Finalize proposal as a snapshot (future revisions still allowed)
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinalizeProposalRequest'
+      responses:
+        '202':
+          description: Finalization job queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandJobResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /projects/{id}/events:
+    get:
+      tags: [Events]
+      summary: Stream real-time project events (optional)
+      description: Server-Sent Events stream for proposal and status updates.
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: |
+                  event: proposal.created
+                  data: {"projectId":"proj_123","version":4}
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+
+components:
+  parameters:
+    ProjectId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Project identifier (e.g., proj_123)
+    ProposalVersion:
+      name: version
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    Search:
+      name: search
+      in: query
+      schema:
+        type: string
+    Status:
+      name: status
+      in: query
+      schema:
+        $ref: '#/components/schemas/ProjectStatus'
+
+  responses:
+    ErrorResponse:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ListProjectsResponse:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectListItem'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+
+    ProjectListItem:
+      type: object
+      required: [id, title, status, latestProposalVersion, proposalCount, updatedAt]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        status:
+          $ref: '#/components/schemas/ProjectStatus'
+        latestProposalVersion:
+          type: integer
+          minimum: 0
+        proposalCount:
+          type: integer
+          minimum: 0
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateProjectRequest:
+      type: object
+      required: [title, requirementText]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        requirementText:
+          type: string
+          minLength: 1
+
+    CreateProjectResponse:
+      type: object
+      required: [projectId, status]
+      properties:
+        projectId:
+          type: string
+        status:
+          $ref: '#/components/schemas/ProjectStatus'
+
+    GetProjectResponse:
+      type: object
+      required: [project]
+      properties:
+        project:
+          $ref: '#/components/schemas/Project'
+
+    Project:
+      type: object
+      required:
+        - id
+        - title
+        - requirementText
+        - status
+        - latestProposalVersion
+        - proposalCount
+        - teamsSessionCreated
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        requirementText:
+          type: string
+        status:
+          $ref: '#/components/schemas/ProjectStatus'
+        latestProposalVersion:
+          type: integer
+          minimum: 0
+        proposalCount:
+          type: integer
+          minimum: 0
+        teamsSessionCreated:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ListProposalsResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProposalSummary'
+
+    ProposalSummary:
+      type: object
+      required: [id, version, title, sourceType, isFinalizedSnapshot, createdAt]
+      properties:
+        id:
+          type: string
+        version:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+        sourceType:
+          $ref: '#/components/schemas/ProposalSourceType'
+        isFinalizedSnapshot:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    GetProposalResponse:
+      type: object
+      required: [proposal]
+      properties:
+        proposal:
+          $ref: '#/components/schemas/Proposal'
+
+    Proposal:
+      type: object
+      required:
+        - id
+        - projectId
+        - version
+        - title
+        - content
+        - sourceType
+        - baseVersions
+        - isFinalizedSnapshot
+        - createdAt
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        version:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+        content:
+          type: string
+        sourceType:
+          $ref: '#/components/schemas/ProposalSourceType'
+        baseVersions:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+        isFinalizedSnapshot:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateTeamsSessionRequest:
+      type: object
+      required: [members]
+      properties:
+        members:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/TeamMember'
+
+    TeamMember:
+      type: object
+      required: [name, email]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+
+    CreateTeamsSessionResponse:
+      type: object
+      required: [sessionId, status]
+      properties:
+        sessionId:
+          type: string
+        status:
+          $ref: '#/components/schemas/TeamsSessionStatus'
+        idempotent:
+          type: boolean
+          default: false
+
+    GetTeamsSessionResponse:
+      type: object
+      required: [session]
+      properties:
+        session:
+          $ref: '#/components/schemas/TeamsSession'
+
+    TeamsSession:
+      type: object
+      required:
+        - sessionId
+        - status
+        - provider
+        - teamId
+        - channelId
+        - threadId
+        - memberCount
+      properties:
+        sessionId:
+          type: string
+        status:
+          $ref: '#/components/schemas/TeamsSessionStatus'
+        provider:
+          type: string
+          enum: [microsoft_teams]
+        teamId:
+          type: string
+        channelId:
+          type: string
+        threadId:
+          type: string
+        memberCount:
+          type: integer
+          minimum: 0
+
+    AskCommandRequest:
+      type: object
+      required: [question, askedBy, source]
+      properties:
+        question:
+          type: string
+          minLength: 1
+        askedBy:
+          $ref: '#/components/schemas/Actor'
+        source:
+          $ref: '#/components/schemas/CommandSource'
+
+    AskCommandResponse:
+      type: object
+      required: [answer, references]
+      properties:
+        answer:
+          type: string
+        references:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reference'
+
+    GenerateProposalRequest:
+      type: object
+      required: [baseVersions, triggeredBy, source]
+      properties:
+        baseVersions:
+          type: array
+          minItems: 1
+          items:
+            type: integer
+            minimum: 1
+        instruction:
+          type: string
+        triggeredBy:
+          $ref: '#/components/schemas/Actor'
+        source:
+          $ref: '#/components/schemas/CommandSource'
+
+    FinalizeProposalRequest:
+      type: object
+      required: [finalizedBy]
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: If omitted, backend finalizes latest available version.
+        finalizedBy:
+          $ref: '#/components/schemas/Actor'
+        note:
+          type: string
+
+    CommandJobResponse:
+      type: object
+      required: [projectId, jobId, status]
+      properties:
+        projectId:
+          type: string
+        jobId:
+          type: string
+        status:
+          $ref: '#/components/schemas/JobStatus'
+
+    Actor:
+      type: object
+      required: [type, userId]
+      properties:
+        type:
+          type: string
+          enum: [sme, bd, system]
+        userId:
+          type: string
+          nullable: true
+
+    CommandSource:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [teams_command, web_ui, system_workflow]
+        threadId:
+          type: string
+          nullable: true
+
+    Reference:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [proposal_version, case_study, source_doc]
+        version:
+          type: integer
+          minimum: 1
+          nullable: true
+        id:
+          type: string
+          nullable: true
+
+    ProjectStatus:
+      type: string
+      enum:
+        - draft
+        - collecting_sources
+        - generating_initial_proposal
+        - ready_for_teams_prompt
+        - teams_creating
+        - teams_active
+        - updating_proposal
+        - completed
+        - failed
+
+    ProposalSourceType:
+      type: string
+      enum:
+        - initial_workflow
+        - generate_proposal
+        - finalize_proposal
+
+    TeamsSessionStatus:
+      type: string
+      enum: [pending, created, failed]
+
+    JobStatus:
+      type: string
+      enum: [queued, running, completed, failed]
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - BAD_REQUEST
+                - VALIDATION_ERROR
+                - PROJECT_NOT_FOUND
+                - PROPOSAL_NOT_FOUND
+                - TEAMS_SESSION_ALREADY_EXISTS
+                - TEAMS_PROVIDER_ERROR
+                - COMMAND_CONFLICT
+                - RATE_LIMITED
+                - INTERNAL_ERROR
+            message:
+              type: string
+            details:
+              nullable: true
