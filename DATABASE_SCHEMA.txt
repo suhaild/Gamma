@@ -1,0 +1,179 @@
+Proposal Workflow - Database Schema (Draft)
+==========================================
+
+Database: PostgreSQL
+
+1) ENUMS
+--------
+
+project_status:
+- draft
+- collecting_sources
+- generating_initial_proposal
+- ready_for_teams_prompt
+- teams_creating
+- teams_active
+- updating_proposal
+- completed
+- failed
+
+proposal_source_type:
+- initial_workflow
+- generate_proposal
+- finalize_proposal
+
+teams_session_status:
+- pending
+- created
+- failed
+
+actor_type:
+- bd
+- sme
+- system
+
+command_type:
+- ask
+- generate_proposal
+- finalize_proposal
+
+job_status:
+- queued
+- running
+- completed
+- failed
+
+
+2) TABLES
+---------
+
+projects
+- id (text, pk) e.g. proj_101
+- title (text, not null)
+- client_name (text)
+- requirement_text (text, not null)
+- status (project_status, not null, default draft)
+- latest_version (int, not null, default 0)
+- proposal_count (int, not null, default 0)
+- estimate_range (text)
+- teams_session_id (text, unique)
+- created_by (text)
+- created_at (timestamptz, default now)
+- updated_at (timestamptz, default now)
+
+proposal_versions
+- id (text, pk) e.g. prop_001
+- project_id (text, fk -> projects.id, on delete cascade)
+- version (int, not null)
+- title (text, not null)
+- content_json (jsonb, not null)                # full proposal structure
+- source_type (proposal_source_type, not null)
+- is_finalized_snapshot (boolean, default false)
+- created_by_actor (actor_type, default system)
+- created_by_user_id (text)
+- created_at (timestamptz, default now)
+- unique(project_id, version)
+
+proposal_version_lineage
+- proposal_id (text, fk -> proposal_versions.id, on delete cascade)
+- base_version (int, not null)
+- pk(proposal_id, base_version)
+
+teams_sessions
+- id (text, pk) e.g. sess_456
+- project_id (text, unique, fk -> projects.id, on delete cascade)
+- status (teams_session_status, default pending)
+- provider (text, default microsoft_teams)
+- team_id (text)
+- channel_id (text)
+- thread_id (text)
+- team_name (text)
+- member_count (int, default 0)
+- created_at (timestamptz, default now)
+- updated_at (timestamptz, default now)
+
+teams_session_members
+- id (bigserial, pk)
+- session_id (text, fk -> teams_sessions.id, on delete cascade)
+- member_name (text)
+- member_email (text, not null)
+- role (text)
+- created_at (timestamptz, default now)
+- unique(session_id, member_email)
+
+command_jobs
+- id (text, pk) e.g. job_001
+- project_id (text, fk -> projects.id, on delete cascade)
+- command (command_type, not null)
+- status (job_status, not null, default queued)
+- requested_by_actor (actor_type, not null)
+- requested_by_user_id (text)
+- input_json (jsonb, default {})
+- output_json (jsonb)
+- error_json (jsonb)
+- created_at (timestamptz, default now)
+- started_at (timestamptz)
+- finished_at (timestamptz)
+
+ask_responses
+- id (bigserial, pk)
+- project_id (text, fk -> projects.id, on delete cascade)
+- job_id (text, fk -> command_jobs.id, on delete set null)
+- question (text, not null)
+- answer (text, not null)
+- references_json (jsonb, default [])
+- created_at (timestamptz, default now)
+
+
+3) INDEXES
+----------
+
+projects:
+- idx_projects_status(status)
+- idx_projects_updated_at(updated_at desc)
+
+proposal_versions:
+- idx_proposal_versions_project(project_id)
+- idx_proposal_versions_created_at(created_at desc)
+
+teams_sessions:
+- idx_teams_sessions_project_id(project_id)
+
+command_jobs:
+- idx_command_jobs_project_id(project_id)
+- idx_command_jobs_status(status)
+
+ask_responses:
+- idx_ask_responses_project_id(project_id)
+
+
+4) API MAPPING (QUICK)
+----------------------
+
+GET /projects
+- projects table (+ optional latest proposal join)
+
+POST /projects
+- insert projects
+- insert proposal_versions with version=1 for initial draft
+
+GET /projects/{id}
+- projects by id
+
+GET /projects/{id}/proposals
+- proposal_versions where project_id=...
+
+GET /projects/{id}/proposals/{version}
+- proposal_versions where project_id=... and version=...
+
+POST /projects/{id}/teams
+- upsert teams_sessions
+- insert teams_session_members
+
+POST /projects/{id}/commands/generate-proposal
+- insert command_jobs
+- background worker inserts new proposal_versions
+
+POST /projects/{id}/commands/finalize-proposal
+- insert command_jobs
+- set is_finalized_snapshot for target version or create finalized snapshot

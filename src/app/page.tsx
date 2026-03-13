@@ -68,6 +68,9 @@ export default function HomePage() {
           <Link href="/proposals/generate" className="action-link">
             Create Proposal
           </Link>
+          <Link href="/projects" className="action-link secondary">
+            View Proposals
+          </Link>
           <Link href="/docs/api" className="action-link secondary">
             View API Specs
           </Link>
