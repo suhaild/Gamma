@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Work_Sans } from "next/font/google";
 import "./globals.css";
+import ThemeToggle from "./theme-toggle";
 
 const headingFont = Cormorant_Garamond({
   subsets: ["latin"],
@@ -26,8 +27,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${headingFont.variable} ${bodyFont.variable}`}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${headingFont.variable} ${bodyFont.variable}`}>
+        <ThemeToggle />
+        {children}
+      </body>
     </html>
   );
 }

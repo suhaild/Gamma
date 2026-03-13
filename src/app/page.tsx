@@ -1,4 +1,36 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
+
+const containerMotion = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.08 },
+  },
+};
+
+const fadeUpMotion = {
+  hidden: { opacity: 0, y: 24 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55 },
+  },
+};
+
+const listContainerMotion = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.09 },
+  },
+};
+
+const listItemMotion = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+};
 
 const flowCards = [
   {
@@ -53,8 +85,13 @@ const trustPoints = [
 
 export default function HomePage() {
   return (
-    <main className="home-shell">
-      <section className="hero">
+    <motion.main
+      className="home-shell"
+      variants={containerMotion}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.section className="hero" variants={fadeUpMotion}>
         <p className="hero-kicker">Gamma Proposal System</p>
         <h1>
           Turn client requirements
@@ -66,51 +103,79 @@ export default function HomePage() {
         </p>
         <div className="hero-actions">
           <Link href="/proposals/generate" className="action-link">
-            Create Proposal
+            <motion.span whileTap={{ scale: 0.96 }}>Create Proposal</motion.span>
           </Link>
           <Link href="/projects" className="action-link secondary">
-            View Proposals
+            <motion.span whileTap={{ scale: 0.96 }}>View Proposals</motion.span>
           </Link>
           <Link href="/docs/api" className="action-link secondary">
-            View API Specs
+            <motion.span whileTap={{ scale: 0.96 }}>View API Specs</motion.span>
           </Link>
         </div>
-      </section>
+      </motion.section>
 
-      <section className="flow-grid" aria-label="Proposal lifecycle">
+      <motion.section
+        className="flow-grid"
+        aria-label="Proposal lifecycle"
+        variants={fadeUpMotion}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, amount: 0.25 }}
+      >
+        <motion.div className="flow-grid-motion" variants={listContainerMotion}>
         {flowCards.map((card) => (
-          <article key={card.step} className="flow-card">
+          <motion.article
+            key={card.step}
+            className="flow-card"
+            variants={listItemMotion}
+            whileHover={{ y: -6, transition: { duration: 0.2 } }}
+            whileTap={{ scale: 0.995 }}
+            transition={{ duration: 0.35 }}
+          >
             <p className="flow-step">{card.step}</p>
             <h2>{card.title}</h2>
             <p>{card.detail}</p>
-          </article>
+          </motion.article>
         ))}
-      </section>
+        </motion.div>
+      </motion.section>
 
-      <section className="feature-section" aria-label="Platform features">
+      <motion.section className="feature-section" aria-label="Platform features" variants={fadeUpMotion}>
         <header className="feature-header">
           <p>Why teams use Gamma</p>
           <h2>Built to move from requirement to client-ready proposal faster</h2>
         </header>
 
-        <div className="feature-grid">
+        <motion.div className="feature-grid" variants={listContainerMotion} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }}>
           {featureCards.map((feature) => (
-            <article key={feature.title} className="feature-card">
+            <motion.article
+              key={feature.title}
+              className="feature-card"
+              variants={listItemMotion}
+              whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              whileTap={{ scale: 0.995 }}
+            >
               <h3>{feature.title}</h3>
               <p>{feature.detail}</p>
-            </article>
+            </motion.article>
           ))}
-        </div>
+        </motion.div>
 
-        <div className="trust-strip">
+        <motion.div className="trust-strip" variants={listContainerMotion} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.25 }}>
           {trustPoints.map((point) => (
-            <article key={point.label} className="trust-item">
+            <motion.article
+              key={point.label}
+              className="trust-item"
+              variants={listItemMotion}
+              whileHover={{ y: -3 }}
+              whileTap={{ scale: 0.995 }}
+            >
               <p>{point.label}</p>
               <strong>{point.value}</strong>
-            </article>
+            </motion.article>
           ))}
-        </div>
-      </section>
-    </main>
+        </motion.div>
+      </motion.section>
+    </motion.main>
   );
 }

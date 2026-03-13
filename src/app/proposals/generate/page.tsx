@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 type CreatedProject = {
   id: string;
@@ -96,6 +97,15 @@ type GeneratedProposal = {
   whyIncubXperts: string[];
 };
 
+const fadeUpMotion = {
+  hidden: { opacity: 0, y: 24 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5 },
+  },
+};
+
 export default function GenerateProposalPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCreatingTeamsGroup, setIsCreatingTeamsGroup] = useState(false);
@@ -183,7 +193,7 @@ export default function GenerateProposalPage() {
 
   return (
     <main className="home-shell">
-      <section className="hero">
+      <motion.section className="hero" initial="hidden" animate="show" variants={fadeUpMotion}>
         <p className="hero-kicker">Generate Proposal</p>
         <h1>
           Paste requirement.
@@ -195,12 +205,18 @@ export default function GenerateProposalPage() {
         </p>
         <div className="hero-actions">
           <Link href="/" className="action-link secondary">
-            Back Home
+            <motion.span whileTap={{ scale: 0.96 }}>Back Home</motion.span>
           </Link>
         </div>
-      </section>
+      </motion.section>
 
-      <section className="generator-shell" aria-label="Generate proposal form">
+      <motion.section
+        className="generator-shell"
+        aria-label="Generate proposal form"
+        initial="hidden"
+        animate="show"
+        variants={fadeUpMotion}
+      >
         <header className="generator-header">
           <p>Generate Flow</p>
           <h2>Single-input requirement form</h2>
@@ -219,7 +235,12 @@ export default function GenerateProposalPage() {
           </label>
 
           <div className="form-footer">
-            <button type="submit" className="action-link" disabled={isGenerating}>
+            <motion.button
+              type="submit"
+              className="action-link"
+              disabled={isGenerating}
+              whileTap={{ scale: 0.96 }}
+            >
               {isGenerating ? (
                 <>
                   <span className="loader" aria-hidden="true" />
@@ -228,7 +249,7 @@ export default function GenerateProposalPage() {
               ) : (
                 "Generate Proposal"
               )}
-            </button>
+            </motion.button>
           </div>
         </form>
 
@@ -236,7 +257,13 @@ export default function GenerateProposalPage() {
         {success ? <div className="projects-empty create-feedback success">{success}</div> : null}
 
         {generatedProposal && createdProject ? (
-          <section className="proposal-preview" aria-label="Generated proposal preview">
+          <motion.section
+            className="proposal-preview"
+            aria-label="Generated proposal preview"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
+          >
             <header className="proposal-preview-header">
               <p>
                 {generatedProposal.header.projectProposalName}{" "}
@@ -472,11 +499,12 @@ export default function GenerateProposalPage() {
             </article>
 
             <div className="proposal-actions">
-              <button
+              <motion.button
                 type="button"
                 className="action-link"
                 disabled={isCreatingTeamsGroup}
                 onClick={handleCreateTeamsGroup}
+                whileTap={{ scale: 0.96 }}
               >
                 {isCreatingTeamsGroup ? (
                   <>
@@ -486,18 +514,18 @@ export default function GenerateProposalPage() {
                 ) : (
                   "Create Group on Teams"
                 )}
-              </button>
+              </motion.button>
               <p>
                 Project ID: <code>{createdProject.id}</code>
               </p>
             </div>
-          </section>
+          </motion.section>
         ) : null}
 
         {teamsSuccess ? (
           <div className="projects-empty create-feedback success">{teamsSuccess}</div>
         ) : null}
-      </section>
+      </motion.section>
     </main>
   );
 }

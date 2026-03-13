@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 type ProjectDetails = {
   id: string;
@@ -22,6 +23,15 @@ type ProjectDetails = {
 
 type Props = {
   params: Promise<{ id: string }>;
+};
+
+const fadeUpMotion = {
+  hidden: { opacity: 0, y: 24 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5 },
+  },
 };
 
 export default function ProjectDetailsPage({ params }: Props) {
@@ -66,7 +76,7 @@ export default function ProjectDetailsPage({ params }: Props) {
 
   return (
     <main className="home-shell">
-      <section className="hero">
+      <motion.section className="hero" initial="hidden" animate="show" variants={fadeUpMotion}>
         <p className="hero-kicker">Project Details</p>
         <h1>
           Review project
@@ -78,20 +88,26 @@ export default function ProjectDetailsPage({ params }: Props) {
         </p>
         <div className="hero-actions">
           <Link href="/projects" className="action-link secondary">
-            Back to Proposals
+            <motion.span whileTap={{ scale: 0.96 }}>Back to Proposals</motion.span>
           </Link>
           <Link href="/proposals/generate" className="action-link">
-            Generate Proposal
+            <motion.span whileTap={{ scale: 0.96 }}>Generate Proposal</motion.span>
           </Link>
         </div>
-      </section>
+      </motion.section>
 
-      <section className="projects-shell" aria-label="Project detail payload">
+      <motion.section
+        className="projects-shell"
+        aria-label="Project detail payload"
+        initial="hidden"
+        animate="show"
+        variants={fadeUpMotion}
+      >
         {loading ? <div className="projects-empty">Loading project details...</div> : null}
         {error ? <div className="projects-empty create-feedback error">{error}</div> : null}
 
         {!loading && !error && project ? (
-          <article className="project-detail-card">
+          <motion.article className="project-detail-card" whileHover={{ y: -2 }}>
             <header className="project-row">
               <h2>{project.projectTitle}</h2>
               <span className={`status-badge status-${project.status}`}>
@@ -139,13 +155,13 @@ export default function ProjectDetailsPage({ params }: Props) {
                 ))}
               </div>
             </div>
-          </article>
+          </motion.article>
         ) : null}
 
         {!loading && !error && !project ? (
           <div className="projects-empty">No project details found for {projectId}.</div>
         ) : null}
-      </section>
+      </motion.section>
     </main>
   );
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 type CreatedProject = {
   id: string;
@@ -10,6 +11,15 @@ type CreatedProject = {
   proposalVersion: number;
   status: "draft" | "in_review" | "finalized" | "needs_input";
   updatedAt: string;
+};
+
+const fadeUpMotion = {
+  hidden: { opacity: 0, y: 24 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5 },
+  },
 };
 
 export default function NewProjectPage() {
@@ -59,7 +69,7 @@ export default function NewProjectPage() {
 
   return (
     <main className="home-shell">
-      <section className="hero">
+      <motion.section className="hero" initial="hidden" animate="show" variants={fadeUpMotion}>
         <p className="hero-kicker">Project Setup</p>
         <h1>
           Start with the requirement.
@@ -71,15 +81,21 @@ export default function NewProjectPage() {
         </p>
         <div className="hero-actions">
           <Link href="/" className="action-link secondary">
-            Back Home
+            <motion.span whileTap={{ scale: 0.96 }}>Back Home</motion.span>
           </Link>
           <Link href="/projects" className="action-link secondary">
-            View Proposals
+            <motion.span whileTap={{ scale: 0.96 }}>View Proposals</motion.span>
           </Link>
         </div>
-      </section>
+      </motion.section>
 
-      <section className="generator-shell" aria-label="Create project form">
+      <motion.section
+        className="generator-shell"
+        aria-label="Create project form"
+        initial="hidden"
+        animate="show"
+        variants={fadeUpMotion}
+      >
         <header className="generator-header">
           <p>Create Project</p>
           <h2>Requirement intake form</h2>
@@ -108,7 +124,12 @@ export default function NewProjectPage() {
           </label>
 
           <div className="form-footer">
-            <button type="submit" className="action-link" disabled={isSubmitting}>
+            <motion.button
+              type="submit"
+              className="action-link"
+              disabled={isSubmitting}
+              whileTap={{ scale: 0.96 }}
+            >
               {isSubmitting ? (
                 <>
                   <span className="loader" aria-hidden="true" />
@@ -117,7 +138,7 @@ export default function NewProjectPage() {
               ) : (
                 "Create Project"
               )}
-            </button>
+            </motion.button>
           </div>
         </form>
 
@@ -132,7 +153,7 @@ export default function NewProjectPage() {
             <p>Status: Draft</p>
           </div>
         ) : null}
-      </section>
+      </motion.section>
     </main>
   );
 }

@@ -6,10 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:test-connection": "node scripts/test-rds-connection.js"
   },
   "dependencies": {
+    "aws-sdk": "^2.1693.0",
+    "framer-motion": "^12.36.0",
     "next": "16.1.6",
+    "pg": "^8.20.0",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },

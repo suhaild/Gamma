@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 type ProjectListItem = {
   id: string;
@@ -28,6 +29,25 @@ const statusLabel: Record<ProjectListItem["status"], string> = {
   in_review: "In Review",
   finalized: "Finalized",
   needs_input: "Needs Input",
+};
+
+const fadeUpMotion = {
+  hidden: { opacity: 0, y: 24 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5 },
+  },
+};
+
+const listContainerMotion = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } },
+};
+
+const listItemMotion = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
 };
 
 export default function ProjectsPage() {
@@ -101,7 +121,7 @@ export default function ProjectsPage() {
 
   return (
     <main className="home-shell">
-      <section className="hero">
+      <motion.section className="hero" initial="hidden" animate="show" variants={fadeUpMotion}>
         <p className="hero-kicker">Proposals</p>
         <h1>
           Active proposal
@@ -112,15 +132,21 @@ export default function ProjectsPage() {
         </p>
         <div className="hero-actions">
           <Link href="/proposals/generate" className="action-link">
-            Create Proposal
+            <motion.span whileTap={{ scale: 0.96 }}>Create Proposal</motion.span>
           </Link>
           <Link href="/" className="action-link secondary">
-            Back Home
+            <motion.span whileTap={{ scale: 0.96 }}>Back Home</motion.span>
           </Link>
         </div>
-      </section>
+      </motion.section>
 
-      <section className="projects-shell" aria-label="Project proposals list">
+      <motion.section
+        className="projects-shell"
+        aria-label="Project proposals list"
+        initial="hidden"
+        animate="show"
+        variants={fadeUpMotion}
+      >
         <header className="projects-header">
           <h2>All Proposals</h2>
         </header>
@@ -132,9 +158,20 @@ export default function ProjectsPage() {
         {error ? <div className="projects-empty">{error}</div> : null}
 
         {!loading && !error ? (
-          <div className="projects-grid">
+          <motion.div
+            className="projects-grid"
+            variants={listContainerMotion}
+            initial="hidden"
+            animate="show"
+          >
             {items.map((item) => (
-              <article key={item.id} className="project-card">
+              <motion.article
+                key={item.id}
+                className="project-card"
+                variants={listItemMotion}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                whileTap={{ scale: 0.996 }}
+              >
                 <div className="project-row">
                   <h3>{item.projectTitle}</h3>
                   <span className={`status-badge status-${item.status}`}>
@@ -152,16 +189,17 @@ export default function ProjectsPage() {
                 <p>Updated: {new Date(item.updatedAt).toLocaleString()}</p>
                 <div className="project-actions">
                   <Link href={`/projects/${item.id}`} className="mini-action link-action">
-                    View Details
+                    <motion.span whileTap={{ scale: 0.96 }}>View Details</motion.span>
                   </Link>
-                  <button
+                  <motion.button
                     type="button"
                     className="mini-action"
                     onClick={() => handleCreateTeamsGroup(item.id)}
                     disabled={creatingForProjectId === item.id}
+                    whileTap={{ scale: 0.96 }}
                   >
                     {creatingForProjectId === item.id ? "Creating..." : "Create Group on Teams"}
-                  </button>
+                  </motion.button>
                 </div>
                 {teamsSessionByProjectId[item.id] ? (
                   <p className="teams-status">
@@ -169,11 +207,11 @@ export default function ProjectsPage() {
                     {teamsSessionByProjectId[item.id].sessionId})
                   </p>
                 ) : null}
-              </article>
+              </motion.article>
             ))}
-          </div>
+          </motion.div>
         ) : null}
-      </section>
+      </motion.section>
     </main>
   );
 }
