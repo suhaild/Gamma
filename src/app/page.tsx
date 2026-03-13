@@ -190,10 +190,10 @@ export default function HomePage() {
             transition={{ duration: 0.5, delay: 0.8 }}
           >
             <Link href="/proposals/generate" className="action-link">
-              <motion.span whileTap={{ scale: 0.96 }}>Create Proposal</motion.span>
+              <motion.span whileTap={{ scale: 0.96 }}>Create Prospect</motion.span>
             </Link>
             <Link href="/projects" className="action-link secondary">
-              <motion.span whileTap={{ scale: 0.96 }}>View Proposals</motion.span>
+              <motion.span whileTap={{ scale: 0.96 }}>View Prospects</motion.span>
             </Link>
             <Link href="/docs/api" className="action-link secondary">
               <motion.span whileTap={{ scale: 0.96 }}>View API Specs</motion.span>

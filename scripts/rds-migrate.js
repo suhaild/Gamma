@@ -75,6 +75,30 @@ async function migrate() {
       console.log("  [OK] FK constraint fk_proposals_project already exists.");
     }
 
+    // 4. Add channel_name column to project_conversations (if not present)
+    const colCheck = await client.query(`
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'project_conversations'
+        AND column_name = 'channel_name';
+    `);
+    if (colCheck.rowCount === 0) {
+      await client.query(`
+        ALTER TABLE project_conversations
+          ADD COLUMN channel_name VARCHAR(255);
+      `);
+      console.log("  [OK] channel_name column added to project_conversations.");
+    } else {
+      console.log("  [OK] channel_name column already exists on project_conversations.");
+    }
+
+    // 5. Set DB-level default on project_conversations.created_at
+    //    (SQLAlchemy only set an application-level default, raw SQL inserts fail without this)
+    await client.query(`
+      ALTER TABLE project_conversations
+        ALTER COLUMN created_at SET DEFAULT now();
+    `);
+    console.log("  [OK] created_at DEFAULT now() set on project_conversations.");
+
     await client.query("COMMIT");
     console.log("\nMigration complete.");
   } catch (err) {

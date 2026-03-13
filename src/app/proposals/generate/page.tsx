@@ -38,6 +38,7 @@ export default function GenerateProposalPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCreatingTeamsGroup, setIsCreatingTeamsGroup] = useState(false);
   const [isCreatingSlackGroup, setIsCreatingSlackGroup] = useState(false);
+  const [title, setTitle] = useState("");
   const [requirementText, setRequirementText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -64,7 +65,7 @@ export default function GenerateProposalPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title: "New Proposal Request",
+          title,
           requirementText,
         }),
       });
@@ -83,6 +84,7 @@ export default function GenerateProposalPage() {
       setCreatedProject(data.project);
       setGeneratedProposal(data.proposal);
       setSuccess(`Proposal generated successfully for ${data.project.projectTitle}.`);
+      setTitle("");
       setRequirementText("");
     } catch {
       setError("Unable to generate proposal right now.");
@@ -206,34 +208,49 @@ export default function GenerateProposalPage() {
         </header>
 
         <form className="generator-form" onSubmit={handleGenerate}>
-          <label className="field field-full">
-            <span>Project Requirement</span>
-            <textarea
-              rows={8}
-              value={requirementText}
-              onChange={(event) => setRequirementText(event.target.value)}
-              placeholder="Paste the full client requirement or JD here. Include scope, goals, constraints, timeline hints, and any known assumptions."
-              required
-            />
-          </label>
+          {!createdProject ? (
+            <>
+              <label className="field field-full">
+                <span>Prospect Title</span>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="e.g. E-Commerce Platform Redesign"
+                  required
+                />
+              </label>
 
-          <div className="form-footer">
-            <motion.button
-              type="submit"
-              className="action-link"
-              disabled={isGenerating}
-              whileTap={{ scale: 0.96 }}
-            >
-              {isGenerating ? (
-                <>
-                  <span className="loader" aria-hidden="true" />
-                  Generating...
-                </>
-              ) : (
-                "Generate Proposal"
-              )}
-            </motion.button>
-          </div>
+              <label className="field field-full">
+                <span>Project Requirement</span>
+                <textarea
+                  rows={8}
+                  value={requirementText}
+                  onChange={(event) => setRequirementText(event.target.value)}
+                  placeholder="Paste the full client requirement or JD here. Include scope, goals, constraints, timeline hints, and any known assumptions."
+                  required
+                />
+              </label>
+
+              <div className="form-footer">
+                <motion.button
+                  type="submit"
+                  className="action-link"
+                  disabled={isGenerating}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  {isGenerating ? (
+                    <>
+                      <span className="loader" aria-hidden="true" />
+                      Generating...
+                    </>
+                  ) : (
+                    "Generate Proposal"
+                  )}
+                </motion.button>
+              </div>
+            </>
+          ) : null}
         </form>
 
         {error ? <div className="projects-empty create-feedback error">{error}</div> : null}

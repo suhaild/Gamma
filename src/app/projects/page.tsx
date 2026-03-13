@@ -97,7 +97,7 @@ export default function ProjectsPage() {
             <motion.span whileTap={{ scale: 0.96 }}>&#8592;</motion.span>
           </Link>
           <Link href="/proposals/generate" className="action-link">
-            <motion.span whileTap={{ scale: 0.96 }}>Create Proposal</motion.span>
+            <motion.span whileTap={{ scale: 0.96 }}>Create Prospect</motion.span>
           </Link>
         </div>
       </motion.section>

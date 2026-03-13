@@ -49,6 +49,8 @@ export default function ProjectDetailsPage({ params }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const [isCreatingSlack, setIsCreatingSlack] = useState(false);
+  const [slackResult, setSlackResult] = useState<{ success?: string; error?: string } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -83,6 +85,41 @@ export default function ProjectDetailsPage({ params }: Props) {
       active = false;
     };
   }, [params]);
+
+  async function handleCreateSlack() {
+    if (!projectId) return;
+    setSlackResult(null);
+    setIsCreatingSlack(true);
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/slack`, {
+        method: "POST",
+      });
+
+      const data = (await response.json()) as {
+        session?: {
+          sessionId: string;
+          workspaceName: string;
+          channelName: string;
+          memberCount: number;
+        };
+        error?: { message?: string };
+      };
+
+      if (!response.ok || !data.session) {
+        setSlackResult({ error: data.error?.message || "Unable to create Slack channel." });
+        return;
+      }
+
+      setSlackResult({
+        success: `Slack channel ready: ${data.session.workspaceName} (#${data.session.channelName}) with ${data.session.memberCount} members.`,
+      });
+    } catch {
+      setSlackResult({ error: "Unable to create Slack channel." });
+    } finally {
+      setIsCreatingSlack(false);
+    }
+  }
 
   return (
     <main className="home-shell">
@@ -172,6 +209,35 @@ export default function ProjectDetailsPage({ params }: Props) {
                     </span>
                   ))}
                 </div>
+              </div>
+            ) : null}
+
+            {project.proposalVersion === 1 ? (
+              <div className="detail-section">
+                <motion.button
+                  type="button"
+                  className="action-link"
+                  disabled={isCreatingSlack || !!slackResult?.success}
+                  onClick={handleCreateSlack}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  {isCreatingSlack ? (
+                    <>
+                      <span className="loader" aria-hidden="true" />
+                      Creating Slack Channel...
+                    </>
+                  ) : slackResult?.success ? (
+                    "Slack Channel Created"
+                  ) : (
+                    "Create Slack Channel"
+                  )}
+                </motion.button>
+                {slackResult?.success ? (
+                  <p className="projects-empty create-feedback success">{slackResult.success}</p>
+                ) : null}
+                {slackResult?.error ? (
+                  <p className="projects-empty create-feedback error">{slackResult.error}</p>
+                ) : null}
               </div>
             ) : null}
           </motion.article>
