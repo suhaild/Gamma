@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import ChatPanel from "./chat/chat-panel";
 
 type ProjectDetails = {
   id: string;
@@ -34,11 +35,19 @@ const fadeUpMotion = {
   },
 };
 
+function getTeamMembers(project: ProjectDetails): string[] {
+  const members = new Set<string>();
+  members.add(project.owners.bd);
+  members.add(project.owners.proposalLead);
+  return Array.from(members);
+}
+
 export default function ProjectDetailsPage({ params }: Props) {
   const [projectId, setProjectId] = useState("");
   const [project, setProject] = useState<ProjectDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -162,6 +171,34 @@ export default function ProjectDetailsPage({ params }: Props) {
           <div className="projects-empty">No project details found for {projectId}.</div>
         ) : null}
       </motion.section>
+
+      {/* Chat FAB + Panel */}
+      {project && (
+        <>
+          {!chatOpen && (
+            <motion.button
+              className="chat-fab"
+              onClick={() => setChatOpen(true)}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.6, type: "spring", stiffness: 260, damping: 20 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span className="chat-fab-pulse" />
+              <span className="chat-fab-icon">💬</span>
+              Chat
+            </motion.button>
+          )}
+
+          <ChatPanel
+            projectId={projectId}
+            teamMembers={getTeamMembers(project)}
+            open={chatOpen}
+            onClose={() => setChatOpen(false)}
+          />
+        </>
+      )}
     </main>
   );
 }

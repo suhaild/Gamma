@@ -71,9 +71,12 @@ export async function POST(request: Request) {
   const createdProject = {
     id: `proj_${Math.floor(100 + Math.random() * 900)}`,
     projectTitle: cleanTitle,
+    clientName: "Confidential Client",
     requirementText: payload.requirementText.trim(),
-    proposalVersion: 0,
+    proposalVersion: 1,
     status: "in_review",
+    estimateRange: "$120k - $180k",
+    createdAt: now,
     updatedAt: now,
   };
 

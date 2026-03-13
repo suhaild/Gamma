@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import ChatPanel from "@/app/projects/[id]/chat/chat-panel";
 
 type CreatedProject = {
   id: string;
@@ -107,20 +108,47 @@ const fadeUpMotion = {
 };
 
 export default function GenerateProposalPage() {
+  const showTeamsButton = false;
+  const hardcodedMemberUpns = [
+    "alice@yourcompany.com",
+    "bob@yourcompany.com",
+    "charlie@yourcompany.com",
+  ];
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCreatingTeamsGroup, setIsCreatingTeamsGroup] = useState(false);
+  const [isCreatingSlackGroup, setIsCreatingSlackGroup] = useState(false);
   const [requirementText, setRequirementText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [teamsSuccess, setTeamsSuccess] = useState<string | null>(null);
+  const [slackSuccess, setSlackSuccess] = useState<string | null>(null);
   const [createdProject, setCreatedProject] = useState<CreatedProject | null>(null);
   const [generatedProposal, setGeneratedProposal] = useState<GeneratedProposal | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+
+  function getChatMembers(): string[] {
+    if (!generatedProposal) return [];
+    const members: string[] = [];
+    if (generatedProposal.engagementRoadmap?.typicalTeamStructure) {
+      for (const m of generatedProposal.engagementRoadmap.typicalTeamStructure) {
+        if (m.role) members.push(m.role);
+      }
+    }
+    if (members.length === 0 && generatedProposal.teamComposition) {
+      for (const name of generatedProposal.teamComposition) {
+        members.push(name);
+      }
+    }
+    return members;
+  }
 
   async function handleGenerate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setSuccess(null);
     setTeamsSuccess(null);
+    setSlackSuccess(null);
     setCreatedProject(null);
     setGeneratedProposal(null);
     setIsGenerating(true);
@@ -169,10 +197,22 @@ export default function GenerateProposalPage() {
     try {
       const response = await fetch(`/api/projects/${createdProject.id}/teams`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          memberUpns: hardcodedMemberUpns,
+        }),
       });
 
       const data = (await response.json()) as {
-        session?: { sessionId: string; teamName: string };
+        session?: {
+          sessionId: string;
+          teamName: string;
+          channelName: string;
+          memberCount: number;
+          provider: "mock" | "microsoft-graph";
+        };
         error?: { message?: string };
       };
 
@@ -182,12 +222,51 @@ export default function GenerateProposalPage() {
       }
 
       setTeamsSuccess(
-        `Teams group ready: ${data.session.teamName} (Session ${data.session.sessionId}).`
+        `Teams group ready: ${data.session.teamName} (${data.session.channelName}) with ${data.session.memberCount} members. Session ${data.session.sessionId}.`
       );
     } catch {
       setError("Unable to create Teams group.");
     } finally {
       setIsCreatingTeamsGroup(false);
+    }
+  }
+
+  async function handleCreateSlackGroup() {
+    if (!createdProject?.id) return;
+
+    setTeamsSuccess(null);
+    setSlackSuccess(null);
+    setError(null);
+    setIsCreatingSlackGroup(true);
+
+    try {
+      const response = await fetch(`/api/projects/${createdProject.id}/slack`, {
+        method: "POST",
+      });
+
+      const data = (await response.json()) as {
+        session?: {
+          sessionId: string;
+          workspaceName: string;
+          channelName: string;
+          memberCount: number;
+          provider: "slack";
+        };
+        error?: { message?: string };
+      };
+
+      if (!response.ok || !data.session) {
+        setError(data.error?.message || "Unable to create Slack group.");
+        return;
+      }
+
+      setSlackSuccess(
+        `Slack group ready: ${data.session.workspaceName} (#${data.session.channelName}) with ${data.session.memberCount} members. Session ${data.session.sessionId}.`
+      );
+    } catch {
+      setError("Unable to create Slack group.");
+    } finally {
+      setIsCreatingSlackGroup(false);
     }
   }
 
@@ -499,20 +578,38 @@ export default function GenerateProposalPage() {
             </article>
 
             <div className="proposal-actions">
+              {showTeamsButton ? (
+                <motion.button
+                  type="button"
+                  className="action-link"
+                  disabled={isCreatingTeamsGroup}
+                  onClick={handleCreateTeamsGroup}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  {isCreatingTeamsGroup ? (
+                    <>
+                      <span className="loader" aria-hidden="true" />
+                      Creating Group...
+                    </>
+                  ) : (
+                    "Create Group on Teams"
+                  )}
+                </motion.button>
+              ) : null}
               <motion.button
                 type="button"
                 className="action-link"
-                disabled={isCreatingTeamsGroup}
-                onClick={handleCreateTeamsGroup}
+                disabled={isCreatingSlackGroup}
+                onClick={handleCreateSlackGroup}
                 whileTap={{ scale: 0.96 }}
               >
-                {isCreatingTeamsGroup ? (
+                {isCreatingSlackGroup ? (
                   <>
                     <span className="loader" aria-hidden="true" />
-                    Creating Group...
+                    Creating Slack Group...
                   </>
                 ) : (
-                  "Create Group on Teams"
+                  "Create Group on Slack"
                 )}
               </motion.button>
               <p>
@@ -525,7 +622,38 @@ export default function GenerateProposalPage() {
         {teamsSuccess ? (
           <div className="projects-empty create-feedback success">{teamsSuccess}</div>
         ) : null}
+        {slackSuccess ? (
+          <div className="projects-empty create-feedback success">{slackSuccess}</div>
+        ) : null}
       </motion.section>
+
+      {/* Chat FAB + Panel — shown after proposal is generated */}
+      {generatedProposal && createdProject && (
+        <>
+          {!chatOpen && (
+            <motion.button
+              className="chat-fab"
+              onClick={() => setChatOpen(true)}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.6, type: "spring", stiffness: 260, damping: 20 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span className="chat-fab-pulse" />
+              <span className="chat-fab-icon">💬</span>
+              Chat
+            </motion.button>
+          )}
+
+          <ChatPanel
+            projectId={createdProject.id}
+            teamMembers={getChatMembers()}
+            open={chatOpen}
+            onClose={() => setChatOpen(false)}
+          />
+        </>
+      )}
     </main>
   );
 }
