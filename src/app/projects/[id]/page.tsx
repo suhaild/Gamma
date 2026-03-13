@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
 import ChatPanel from "./chat/chat-panel";
 
 type ProjectDetails = {
@@ -20,6 +21,12 @@ type ProjectDetails = {
     proposalLead: string;
   };
   tags?: string[];
+};
+
+type ProposalContent = {
+  version: number;
+  content: string;
+  timestamp: string;
 };
 
 type Props = {
@@ -48,6 +55,7 @@ export default function ProjectDetailsPage({ params }: Props) {
   const [project, setProject] = useState<ProjectDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [proposalContent, setProposalContent] = useState<ProposalContent | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [isCreatingSlack, setIsCreatingSlack] = useState(false);
   const [slackResult, setSlackResult] = useState<{ success?: string; error?: string } | null>(null);
@@ -73,6 +81,12 @@ export default function ProjectDetailsPage({ params }: Props) {
         }
 
         setProject(data.project);
+
+        const proposalResponse = await fetch(`/api/projects/${id}/proposal`, { cache: "no-store" });
+        if (proposalResponse.ok) {
+          const proposalData = (await proposalResponse.json()) as { proposal?: ProposalContent | null };
+          setProposalContent(proposalData.proposal ?? null);
+        }
       } catch {
         setError("Unable to load project details.");
       } finally {
@@ -142,7 +156,8 @@ export default function ProjectDetailsPage({ params }: Props) {
             onClick={() => setChatOpen(true)}
             whileTap={{ scale: 0.96 }}
           >
-            💬 View Chat
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4 }}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+            View Chat
           </motion.button>
         </div>
       </motion.section>
@@ -198,6 +213,18 @@ export default function ProjectDetailsPage({ params }: Props) {
               <h3>Requirement</h3>
               <p>{project.requirementText}</p>
             </div>
+
+            {proposalContent ? (
+              <div className="detail-section">
+                <h3>
+                  Proposal{" "}
+                  <span style={{ fontWeight: 400, fontSize: "0.85em" }}>v{proposalContent.version}</span>
+                </h3>
+                <div className="proposal-body">
+                  <ReactMarkdown>{proposalContent.content}</ReactMarkdown>
+                </div>
+              </div>
+            ) : null}
 
             {project.tags && project.tags.length > 0 ? (
               <div className="detail-section">

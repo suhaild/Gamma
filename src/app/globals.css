@@ -332,17 +332,34 @@ body {
 }
 
 .flow-icon {
-  font-size: 1.3rem;
-  line-height: 1;
-  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.45rem;
+  background: rgba(210, 175, 115, 0.12);
+  color: var(--accent);
 }
 
-/* Feature Card Icons */
+.flow-icon svg {
+  flex-shrink: 0;
+}
+
 .feature-icon {
-  display: block;
-  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 0.55rem;
+  background: rgba(210, 175, 115, 0.12);
+  color: var(--accent);
   margin-bottom: 0.55rem;
-  line-height: 1;
+}
+
+.feature-icon svg {
+  flex-shrink: 0;
 }
 
 /* Footer */
@@ -734,6 +751,33 @@ html[data-theme="light"] .status-needs_input {
   color: #b4d2ef;
 }
 
+.project-detail-card .action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.6rem 1.15rem;
+  background: rgba(210, 175, 115, 0.16);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.project-detail-card .action-link:hover {
+  transform: translateY(-2px);
+  border-color: rgba(242, 206, 143, 0.44);
+  background: rgba(210, 175, 115, 0.3);
+}
+
+.project-detail-card .action-link:disabled {
+  opacity: 0.72;
+  cursor: wait;
+  transform: none;
+}
+
 html[data-theme="light"] .tag-pill {
   background: rgba(66, 120, 175, 0.2);
   border-color: rgba(56, 102, 149, 0.45);
@@ -788,6 +832,178 @@ html[data-theme="light"] .tag-pill {
   display: grid;
   gap: 0.25rem;
 }
+
+/* ── Proposal markdown body ─────────────────────────────────────── */
+.proposal-body {
+  --pb-gap: 0.85rem;
+  display: grid;
+  gap: var(--pb-gap);
+  font-size: 0.93rem;
+  line-height: 1.72;
+}
+
+.proposal-body > * {
+  margin: 0;
+}
+
+.proposal-body h1 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--accent-strong);
+  letter-spacing: -0.02em;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.45rem;
+}
+
+.proposal-body h2 {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.015em;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.3rem;
+}
+
+.proposal-body h3 {
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.proposal-body h4,
+.proposal-body h5,
+.proposal-body h6 {
+  font-size: 0.93rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.proposal-body p {
+  color: var(--muted);
+  line-height: 1.72;
+}
+
+.proposal-body strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.proposal-body em {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.proposal-body ul,
+.proposal-body ol {
+  padding-left: 1.4rem;
+  display: grid;
+  gap: 0.3rem;
+  color: var(--muted);
+}
+
+.proposal-body li::marker {
+  color: var(--accent);
+}
+
+.proposal-body blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 0.5rem 0 0.5rem 1rem;
+  background: rgba(210, 175, 115, 0.06);
+  border-radius: 0 0.45rem 0.45rem 0;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.proposal-body blockquote p {
+  color: var(--muted);
+}
+
+.proposal-body code {
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
+  font-size: 0.84em;
+  background: var(--surface-3);
+  color: var(--accent-strong);
+  padding: 0.15em 0.4em;
+  border-radius: 0.3rem;
+  border: 1px solid var(--line);
+}
+
+.proposal-body pre {
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+}
+
+.proposal-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.proposal-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.proposal-body th {
+  background: rgba(210, 175, 115, 0.1);
+  color: var(--accent);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  letter-spacing: 0.04em;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+}
+
+.proposal-body td {
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  vertical-align: top;
+}
+
+.proposal-body tr:last-child td {
+  border-bottom: none;
+}
+
+.proposal-body hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 0.4rem 0;
+}
+
+.proposal-body a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(210, 175, 115, 0.45);
+  transition: color 150ms ease, text-decoration-color 150ms ease;
+}
+
+.proposal-body a:hover {
+  color: var(--accent-strong);
+  text-decoration-color: var(--accent-strong);
+}
+
+html[data-theme="light"] .proposal-body blockquote {
+  background: rgba(159, 117, 56, 0.07);
+}
+
+html[data-theme="light"] .proposal-body th {
+  background: rgba(159, 117, 56, 0.08);
+}
+
+/* ── end Proposal markdown body ─────────────────────────────────── */
 
 .proposal-metrics {
   display: grid;
