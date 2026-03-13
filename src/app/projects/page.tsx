@@ -19,12 +19,6 @@ type ProjectsResponse = {
   total: number;
 };
 
-type TeamsSession = {
-  sessionId: string;
-  teamName?: string;
-  workspaceName?: string;
-};
-
 const statusLabel: Record<ProjectListItem["status"], string> = {
   draft: "Draft",
   in_review: "In Review",
@@ -52,14 +46,9 @@ const listItemMotion = {
 };
 
 export default function ProjectsPage() {
-  const showTeamsButton = false;
   const [items, setItems] = useState<ProjectListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [creatingForProjectId, setCreatingForProjectId] = useState<string | null>(null);
-  const [teamsSessionByProjectId, setTeamsSessionByProjectId] = useState<
-    Record<string, TeamsSession>
-  >({});
 
   useEffect(() => {
     let active = true;
@@ -92,64 +81,6 @@ export default function ProjectsPage() {
     };
   }, []);
 
-  async function handleCreateTeamsGroup(projectId: string) {
-    setError(null);
-    setCreatingForProjectId(projectId);
-
-    try {
-      const response = await fetch(`/api/projects/${projectId}/teams`, {
-        method: "POST",
-      });
-      const data = (await response.json()) as {
-        session?: TeamsSession;
-        error?: { message?: string };
-      };
-
-      if (!response.ok || !data.session) {
-        setError(data.error?.message || "Unable to create Teams group.");
-        return;
-      }
-
-      setTeamsSessionByProjectId((current) => ({
-        ...current,
-        [projectId]: data.session as TeamsSession,
-      }));
-    } catch {
-      setError("Unable to create Teams group.");
-    } finally {
-      setCreatingForProjectId(null);
-    }
-  }
-
-  async function handleCreateSlackGroup(projectId: string) {
-    setError(null);
-    setCreatingForProjectId(projectId);
-
-    try {
-      const response = await fetch(`/api/projects/${projectId}/slack`, {
-        method: "POST",
-      });
-      const data = (await response.json()) as {
-        session?: TeamsSession;
-        error?: { message?: string };
-      };
-
-      if (!response.ok || !data.session) {
-        setError(data.error?.message || "Unable to create Slack group.");
-        return;
-      }
-
-      setTeamsSessionByProjectId((current) => ({
-        ...current,
-        [projectId]: data.session as TeamsSession,
-      }));
-    } catch {
-      setError("Unable to create Slack group.");
-    } finally {
-      setCreatingForProjectId(null);
-    }
-  }
-
   return (
     <main className="home-shell">
       <motion.section className="hero" initial="hidden" animate="show" variants={fadeUpMotion}>
@@ -162,11 +93,11 @@ export default function ProjectsPage() {
           Track all proposal drafts, revisions, and finalized outputs in one place.
         </p>
         <div className="hero-actions">
+          <Link href="/" className="action-link secondary" aria-label="Back Home">
+            <motion.span whileTap={{ scale: 0.96 }}>&#8592;</motion.span>
+          </Link>
           <Link href="/proposals/generate" className="action-link">
             <motion.span whileTap={{ scale: 0.96 }}>Create Proposal</motion.span>
-          </Link>
-          <Link href="/" className="action-link secondary">
-            <motion.span whileTap={{ scale: 0.96 }}>Back Home</motion.span>
           </Link>
         </div>
       </motion.section>
@@ -222,36 +153,7 @@ export default function ProjectsPage() {
                   <Link href={`/projects/${item.id}`} className="mini-action link-action">
                     <motion.span whileTap={{ scale: 0.96 }}>View Details</motion.span>
                   </Link>
-                  {showTeamsButton ? (
-                    <motion.button
-                      type="button"
-                      className="mini-action"
-                      onClick={() => handleCreateTeamsGroup(item.id)}
-                      disabled={creatingForProjectId === item.id}
-                      whileTap={{ scale: 0.96 }}
-                    >
-                      {creatingForProjectId === item.id ? "Creating..." : "Create Group on Teams"}
-                    </motion.button>
-                  ) : null}
-                  <motion.button
-                    type="button"
-                    className="mini-action"
-                    onClick={() => handleCreateSlackGroup(item.id)}
-                    disabled={creatingForProjectId === item.id}
-                    whileTap={{ scale: 0.96 }}
-                  >
-                    {creatingForProjectId === item.id ? "Creating..." : "Create Group on Slack"}
-                  </motion.button>
                 </div>
-                {teamsSessionByProjectId[item.id] ? (
-                  <p className="teams-status">
-                    Group ready:{" "}
-                    {teamsSessionByProjectId[item.id].workspaceName ||
-                      teamsSessionByProjectId[item.id].teamName}{" "}
-                    (
-                    {teamsSessionByProjectId[item.id].sessionId})
-                  </p>
-                ) : null}
               </motion.article>
             ))}
           </motion.div>

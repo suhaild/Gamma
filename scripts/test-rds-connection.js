@@ -1,24 +1,18 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const { Client } = require('pg');
-const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
-AWS.config.update({ region: 'us-east-2' });
+require('dotenv').config({ path: path.resolve(process.cwd(), '.env.local') });
 
 async function main() {
-  let password = 'gamma_db';
-
   const client = new Client({
-    host: 'gamma-db-dev.c5o4mgsmkcvz.us-east-2.rds.amazonaws.com',
-    port: 5432,
-    database: 'master',
-    user: 'postgres',
-    password,
+    host: process.env.RDS_HOST,
+    port: parseInt(process.env.RDS_PORT || '5432', 10),
+    database: process.env.RDS_DATABASE,
+    user: process.env.RDS_USERNAME,
+    password: process.env.RDS_PASSWORD,
     ssl: {
       rejectUnauthorized: false,
-      ca: fs
-        .readFileSync(path.resolve(process.cwd(), 'certs/global-bundle.pem'))
-        .toString(),
     },
   });
 

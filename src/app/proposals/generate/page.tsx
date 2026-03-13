@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
 import ChatPanel from "@/app/projects/[id]/chat/chat-panel";
 
 type CreatedProject = {
@@ -13,89 +14,8 @@ type CreatedProject = {
 
 type GeneratedProposal = {
   version: number;
-  header: {
-    clientName: string;
-    projectProposalName: string;
-    preparedBy: string;
-    date: string;
-  };
-  proposalBrief: string;
-  projectObjectives: string[];
-  projectDeliverables: string[];
-  projectScope: Array<{
-    persona: string;
-    keyNeeds: string;
-    relevantFeatures: string[];
-  }>;
-  workBreakdown: Array<{
-    task: string;
-    estimateDays: number;
-  }>;
-  architectureOverview: string;
-  technologyStack: {
-    frontend: string;
-    backend: string;
-    database: string;
-    hosting: string;
-    aiComponents: {
-      aiModel: string;
-      hosting: string;
-      vectorDatabase: string;
-      orchestration: string;
-    };
-  };
-  risksAndMitigation: Array<{
-    risk: string;
-    impact: string;
-    mitigation: string;
-  }>;
-  aiSolutionOverview: string;
-  aiModelScope: {
-    modelName: string;
-    itWill: string[];
-    itWillNot: string[];
-  };
-  projectMilestones: Array<{
-    milestone: string;
-    timeline: string;
-    deliverable: string;
-  }>;
-  resourceLoadingPlan: Array<{
-    role: string;
-    month1: number;
-    month2: number;
-    month3: number;
-  }>;
-  budget: {
-    projectBudget: Array<{
-      skillset: string;
-      personMonths: number;
-      rateUsd: number;
-      totalUsd: number;
-    }>;
-    grandTotalUsd: number;
-    aiPlatformCosts: Array<{
-      component: string;
-      type: string;
-      estimatedCost: string;
-    }>;
-  };
-  teamComposition: string[];
-  outOfScope: string[];
-  assumptions: string[];
-  competitiveAnalysis: string;
-  visualDesigns: string;
-  engagementRoadmap: {
-    pilot: string;
-    checkpoint: string;
-    ongoing: string;
-    typicalTeamStructure: Array<{
-      role: string;
-      responsibilities: string;
-      allocation: string;
-    }>;
-  };
-  whyIncubXperts: string[];
+  content: string;
+  timestamp: string;
 };
 
 const fadeUpMotion = {
@@ -126,22 +46,6 @@ export default function GenerateProposalPage() {
   const [createdProject, setCreatedProject] = useState<CreatedProject | null>(null);
   const [generatedProposal, setGeneratedProposal] = useState<GeneratedProposal | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
-
-  function getChatMembers(): string[] {
-    if (!generatedProposal) return [];
-    const members: string[] = [];
-    if (generatedProposal.engagementRoadmap?.typicalTeamStructure) {
-      for (const m of generatedProposal.engagementRoadmap.typicalTeamStructure) {
-        if (m.role) members.push(m.role);
-      }
-    }
-    if (members.length === 0 && generatedProposal.teamComposition) {
-      for (const name of generatedProposal.teamComposition) {
-        members.push(name);
-      }
-    }
-    return members;
-  }
 
   async function handleGenerate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -279,12 +183,12 @@ export default function GenerateProposalPage() {
           <span>Generate proposal.</span>
         </h1>
         <p className="hero-copy">
-          Start with only the client requirement text. Project context, user context, and
-          source metadata can be injected automatically by backend defaults.
+          Paste your client&apos;s requirement below and let Gamma craft a detailed proposal
+          with effort estimates, team structure, and delivery timelines.
         </p>
         <div className="hero-actions">
-          <Link href="/" className="action-link secondary">
-            <motion.span whileTap={{ scale: 0.96 }}>Back Home</motion.span>
+          <Link href="/" className="action-link secondary" aria-label="Back Home">
+            <motion.span whileTap={{ scale: 0.96 }}>&#8592;</motion.span>
           </Link>
         </div>
       </motion.section>
@@ -345,237 +249,15 @@ export default function GenerateProposalPage() {
           >
             <header className="proposal-preview-header">
               <p>
-                {generatedProposal.header.projectProposalName}{" "}
+                {createdProject.projectTitle}{" "}
                 <span>v{generatedProposal.version}</span>
               </p>
               <strong className="status-badge status-in_review">In Review</strong>
             </header>
 
-            <article>
-              <h3>Prepared For</h3>
-              <p>{generatedProposal.header.clientName}</p>
-              <p>
-                Prepared by {generatedProposal.header.preparedBy} on{" "}
-                {generatedProposal.header.date}
-              </p>
-            </article>
-
-            <article>
-              <h3>Proposal Brief</h3>
-              <p>{generatedProposal.proposalBrief}</p>
-            </article>
-
-            <article>
-              <h3>Project Objectives / Goals</h3>
-              <ul>
-                {generatedProposal.projectObjectives.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-
-            <article>
-              <h3>Project Deliverables</h3>
-              <ul>
-                {generatedProposal.projectDeliverables.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-
-            <article>
-              <h3>Project Scope - Persona and Feature Breakdown</h3>
-              <ul>
-                {generatedProposal.projectScope.map((item) => (
-                  <li key={item.persona}>
-                    <strong>{item.persona}:</strong> {item.keyNeeds}
-                    <ul>
-                      {item.relevantFeatures.map((feature) => (
-                        <li key={feature}>{feature}</li>
-                      ))}
-                    </ul>
-                  </li>
-                ))}
-              </ul>
-            </article>
-
-            <article>
-              <h3>Work Breakdown Structure</h3>
-              <ul>
-                {generatedProposal.workBreakdown.map((item) => (
-                  <li key={item.task}>
-                    {item.task} - {item.estimateDays} days
-                  </li>
-                ))}
-              </ul>
-            </article>
-
-            <article>
-              <h3>Architecture Overview</h3>
-              <p>{generatedProposal.architectureOverview}</p>
-            </article>
-
-            <article>
-              <h3>Technology Stack</h3>
-              <ul>
-                <li>Frontend: {generatedProposal.technologyStack.frontend}</li>
-                <li>Backend: {generatedProposal.technologyStack.backend}</li>
-                <li>Database: {generatedProposal.technologyStack.database}</li>
-                <li>Hosting: {generatedProposal.technologyStack.hosting}</li>
-                <li>
-                  AI Model: {generatedProposal.technologyStack.aiComponents.aiModel}
-                </li>
-                <li>
-                  Vector DB: {generatedProposal.technologyStack.aiComponents.vectorDatabase}
-                </li>
-                <li>
-                  Orchestration:{" "}
-                  {generatedProposal.technologyStack.aiComponents.orchestration}
-                </li>
-              </ul>
-            </article>
-
-            <article>
-              <h3>Risks and Mitigation</h3>
-              <ul>
-                {generatedProposal.risksAndMitigation.map((item) => (
-                  <li key={item.risk}>
-                    <strong>{item.risk}</strong> ({item.impact}) - {item.mitigation}
-                  </li>
-                ))}
-              </ul>
-            </article>
-
-            <article>
-              <h3>AI Solution Overview</h3>
-              <p>{generatedProposal.aiSolutionOverview}</p>
-            </article>
-
-            <article>
-              <h3>AI Model Scope & Capabilities</h3>
-              <p>{generatedProposal.aiModelScope.modelName}</p>
-              <p>It will:</p>
-              <ul>
-                {generatedProposal.aiModelScope.itWill.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-              <p>It will not:</p>
-              <ul>
-                {generatedProposal.aiModelScope.itWillNot.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-
-            <div className="proposal-metrics">
-              <article>
-                <h4>Project Milestones</h4>
-                <ul>
-                  {generatedProposal.projectMilestones.map((item) => (
-                    <li key={item.milestone}>
-                      {item.milestone} - {item.timeline} ({item.deliverable})
-                    </li>
-                  ))}
-                </ul>
-              </article>
-              <article>
-                <h4>Resource Loading Plan</h4>
-                <ul>
-                  {generatedProposal.resourceLoadingPlan.map((item) => (
-                    <li key={item.role}>
-                      {item.role}: M1 {item.month1}, M2 {item.month2}, M3 {item.month3}
-                    </li>
-                  ))}
-                </ul>
-              </article>
+            <div className="proposal-markdown">
+              <ReactMarkdown>{generatedProposal.content}</ReactMarkdown>
             </div>
-
-            <article>
-              <h3>Budget / Project Budget</h3>
-              <ul>
-                {generatedProposal.budget.projectBudget.map((item) => (
-                  <li key={item.skillset}>
-                    {item.skillset}: {item.personMonths} PM x ${item.rateUsd} = $
-                    {item.totalUsd}
-                  </li>
-                ))}
-              </ul>
-              <p>Grand Total: ${generatedProposal.budget.grandTotalUsd}</p>
-              <ul>
-                {generatedProposal.budget.aiPlatformCosts.map((item) => (
-                  <li key={item.component}>
-                    {item.component} ({item.type}): {item.estimatedCost}
-                  </li>
-                ))}
-              </ul>
-            </article>
-
-            <article>
-              <h3>Team Composition</h3>
-              <ul>
-                {generatedProposal.teamComposition.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-
-            <article>
-              <h3>Out of Scope</h3>
-              <ul>
-                {generatedProposal.outOfScope.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-
-            <article>
-              <h3>Assumptions</h3>
-              <ul>
-                {generatedProposal.assumptions.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-
-            <article>
-              <h3>Competitive Analysis</h3>
-              <p>{generatedProposal.competitiveAnalysis}</p>
-            </article>
-
-            <article>
-              <h3>Visual Designs</h3>
-              <p>{generatedProposal.visualDesigns}</p>
-            </article>
-
-            <article>
-              <h3>Engagement Roadmap</h3>
-              <p>
-                <strong>Pilot:</strong> {generatedProposal.engagementRoadmap.pilot}
-              </p>
-              <p>
-                <strong>Checkpoint:</strong> {generatedProposal.engagementRoadmap.checkpoint}
-              </p>
-              <p>
-                <strong>Ongoing:</strong> {generatedProposal.engagementRoadmap.ongoing}
-              </p>
-              <ul>
-                {generatedProposal.engagementRoadmap.typicalTeamStructure.map((item) => (
-                  <li key={item.role}>
-                    {item.role} - {item.responsibilities} ({item.allocation})
-                  </li>
-                ))}
-              </ul>
-            </article>
-
-            <article>
-              <h3>Why IncubXperts</h3>
-              <ul>
-                {generatedProposal.whyIncubXperts.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
 
             <div className="proposal-actions">
               {showTeamsButton ? (
@@ -612,6 +294,14 @@ export default function GenerateProposalPage() {
                   "Create Group on Slack"
                 )}
               </motion.button>
+              <motion.button
+                type="button"
+                className="action-link chat-inline-btn"
+                onClick={() => setChatOpen((prev) => !prev)}
+                whileTap={{ scale: 0.96 }}
+              >
+                {chatOpen ? "Close Chat" : "Chat"}
+              </motion.button>
               <p>
                 Project ID: <code>{createdProject.id}</code>
               </p>
@@ -627,32 +317,13 @@ export default function GenerateProposalPage() {
         ) : null}
       </motion.section>
 
-      {/* Chat FAB + Panel — shown after proposal is generated */}
       {generatedProposal && createdProject && (
-        <>
-          {!chatOpen && (
-            <motion.button
-              className="chat-fab"
-              onClick={() => setChatOpen(true)}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.6, type: "spring", stiffness: 260, damping: 20 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span className="chat-fab-pulse" />
-              <span className="chat-fab-icon">💬</span>
-              Chat
-            </motion.button>
-          )}
-
-          <ChatPanel
-            projectId={createdProject.id}
-            teamMembers={getChatMembers()}
-            open={chatOpen}
-            onClose={() => setChatOpen(false)}
-          />
-        </>
+        <ChatPanel
+          projectId={createdProject.id}
+          teamMembers={[]}
+          open={chatOpen}
+          onClose={() => setChatOpen(false)}
+        />
       )}
     </main>
   );

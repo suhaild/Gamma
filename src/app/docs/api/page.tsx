@@ -18,14 +18,14 @@ export default function ApiDocsPage() {
         <p className="hero-kicker">API Docs</p>
         <h1>
           Proposal workflow
-          <span>endpoint map.</span>
+          <span>reference guide.</span>
         </h1>
         <p className="hero-copy">
-          This page is a simple in-app entry point for your API docs and endpoint reference.
+          A quick overview of the available operations that power your proposal workflow.
         </p>
         <div className="hero-actions">
-          <Link href="/" className="action-link secondary">
-            Back Home
+          <Link href="/" className="action-link secondary" aria-label="Back Home">
+            &#8592;
           </Link>
         </div>
       </section>

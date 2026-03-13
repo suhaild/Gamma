@@ -76,12 +76,12 @@ export default function NewProjectPage() {
           <span>Create a proposal workspace.</span>
         </h1>
         <p className="hero-copy">
-          Submit requirement details and get a ready project record to continue the
-          proposal flow.
+          Kick off a new project by entering the client details and requirements.
+          Everything else follows from here.
         </p>
         <div className="hero-actions">
-          <Link href="/" className="action-link secondary">
-            <motion.span whileTap={{ scale: 0.96 }}>Back Home</motion.span>
+          <Link href="/" className="action-link secondary" aria-label="Back Home">
+            <motion.span whileTap={{ scale: 0.96 }}>&#8592;</motion.span>
           </Link>
           <Link href="/projects" className="action-link secondary">
             <motion.span whileTap={{ scale: 0.96 }}>View Proposals</motion.span>

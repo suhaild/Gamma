@@ -12,14 +12,14 @@ type ProjectDetails = {
   requirementText: string;
   status: "draft" | "in_review" | "finalized" | "needs_input";
   proposalVersion: number;
-  estimateRange: string;
+  estimateRange?: string;
   createdAt: string;
   updatedAt: string;
-  owners: {
+  owners?: {
     bd: string;
     proposalLead: string;
   };
-  tags: string[];
+  tags?: string[];
 };
 
 type Props = {
@@ -36,6 +36,7 @@ const fadeUpMotion = {
 };
 
 function getTeamMembers(project: ProjectDetails): string[] {
+  if (!project.owners) return [];
   const members = new Set<string>();
   members.add(project.owners.bd);
   members.add(project.owners.proposalLead);
@@ -92,16 +93,20 @@ export default function ProjectDetailsPage({ params }: Props) {
           <span>scope and status.</span>
         </h1>
         <p className="hero-copy">
-          This page is powered by `GET /api/projects/{'{id}'}` and shows current project
-          context for proposal decision-making.
+          View all the details for this project — client info, team ownership,
+          requirements, and current progress at a glance.
         </p>
         <div className="hero-actions">
-          <Link href="/projects" className="action-link secondary">
-            <motion.span whileTap={{ scale: 0.96 }}>Back to Proposals</motion.span>
+          <Link href="/projects" className="action-link secondary" aria-label="Back to Proposals">
+            <motion.span whileTap={{ scale: 0.96 }}>&#8592;</motion.span>
           </Link>
-          <Link href="/proposals/generate" className="action-link">
-            <motion.span whileTap={{ scale: 0.96 }}>Generate Proposal</motion.span>
-          </Link>
+          <motion.button
+            className="action-link"
+            onClick={() => setChatOpen(true)}
+            whileTap={{ scale: 0.96 }}
+          >
+            💬 View Chat
+          </motion.button>
         </div>
       </motion.section>
 
@@ -125,23 +130,26 @@ export default function ProjectDetailsPage({ params }: Props) {
             </header>
 
             <p>
-              <strong>Project ID:</strong> <code>{project.id}</code>
-            </p>
-            <p>
               <strong>Client:</strong> {project.clientName}
             </p>
             <p>
               <strong>Current Proposal Version:</strong> v{project.proposalVersion}
             </p>
-            <p>
-              <strong>Estimate Range:</strong> {project.estimateRange}
-            </p>
-            <p>
-              <strong>BD Owner:</strong> {project.owners.bd}
-            </p>
-            <p>
-              <strong>Proposal Lead:</strong> {project.owners.proposalLead}
-            </p>
+            {project.estimateRange ? (
+              <p>
+                <strong>Estimate Range:</strong> {project.estimateRange}
+              </p>
+            ) : null}
+            {project.owners ? (
+              <>
+                <p>
+                  <strong>BD Owner:</strong> {project.owners.bd}
+                </p>
+                <p>
+                  <strong>Proposal Lead:</strong> {project.owners.proposalLead}
+                </p>
+              </>
+            ) : null}
             <p>
               <strong>Created:</strong> {new Date(project.createdAt).toLocaleString()}
             </p>
@@ -154,16 +162,18 @@ export default function ProjectDetailsPage({ params }: Props) {
               <p>{project.requirementText}</p>
             </div>
 
-            <div className="detail-section">
-              <h3>Tags</h3>
-              <div className="chip-row">
-                {project.tags.map((tag) => (
-                  <span key={tag} className="status-badge tag-pill">
-                    {tag}
-                  </span>
-                ))}
+            {project.tags && project.tags.length > 0 ? (
+              <div className="detail-section">
+                <h3>Tags</h3>
+                <div className="chip-row">
+                  {project.tags.map((tag) => (
+                    <span key={tag} className="status-badge tag-pill">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : null}
           </motion.article>
         ) : null}
 
@@ -172,32 +182,13 @@ export default function ProjectDetailsPage({ params }: Props) {
         ) : null}
       </motion.section>
 
-      {/* Chat FAB + Panel */}
       {project && (
-        <>
-          {!chatOpen && (
-            <motion.button
-              className="chat-fab"
-              onClick={() => setChatOpen(true)}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.6, type: "spring", stiffness: 260, damping: 20 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span className="chat-fab-pulse" />
-              <span className="chat-fab-icon">💬</span>
-              Chat
-            </motion.button>
-          )}
-
-          <ChatPanel
-            projectId={projectId}
-            teamMembers={getTeamMembers(project)}
-            open={chatOpen}
-            onClose={() => setChatOpen(false)}
-          />
-        </>
+        <ChatPanel
+          projectId={projectId}
+          teamMembers={getTeamMembers(project)}
+          open={chatOpen}
+          onClose={() => setChatOpen(false)}
+        />
       )}
     </main>
   );

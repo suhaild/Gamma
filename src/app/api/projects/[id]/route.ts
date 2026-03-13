@@ -1,97 +1,71 @@
 import { NextResponse } from "next/server";
+import { getRdsPool } from "@/lib/backend/infra/db/rds-client";
 
 type Params = {
   params: Promise<{ id: string }>;
 };
 
-const projectDetails = [
-  {
-    id: "proj_101",
-    projectTitle: "Retail CRM Modernization Program",
-    clientName: "Northwind Retail Group",
-    requirementText:
-      "Modernize the CRM stack to improve sales visibility, reduce onboarding time for sales reps, and enable automation for lead lifecycle workflows.",
-    status: "in_review",
-    proposalVersion: 3,
-    estimateRange: "$180k - $220k",
-    createdAt: "2026-03-05T09:00:00Z",
-    updatedAt: "2026-03-12T12:10:00Z",
-    owners: {
-      bd: "A. Johnson",
-      proposalLead: "M. Patel",
-    },
-    tags: ["crm", "sales-automation", "enterprise"],
-  },
-  {
-    id: "proj_102",
-    projectTitle: "Supply Chain Command Center Upgrade",
-    clientName: "BlueArc Logistics",
-    requirementText:
-      "Create a command center dashboard to unify shipment tracking, SLA alerts, and route-level operational insights.",
-    status: "draft",
-    proposalVersion: 1,
-    estimateRange: "$95k - $125k",
-    createdAt: "2026-03-10T10:25:00Z",
-    updatedAt: "2026-03-12T09:30:00Z",
-    owners: {
-      bd: "S. Nguyen",
-      proposalLead: "R. Shah",
-    },
-    tags: ["logistics", "dashboard", "analytics"],
-  },
-  {
-    id: "proj_103",
-    projectTitle: "Digital Onboarding Automation",
-    clientName: "Orion Capital",
-    requirementText:
-      "Automate onboarding journey for new users with compliance checkpoints, document workflow, and case-handling visibility.",
-    status: "finalized",
-    proposalVersion: 4,
-    estimateRange: "$260k - $310k",
-    createdAt: "2026-02-26T14:40:00Z",
-    updatedAt: "2026-03-11T17:45:00Z",
-    owners: {
-      bd: "K. Fernandes",
-      proposalLead: "P. Sethi",
-    },
-    tags: ["fintech", "onboarding", "compliance"],
-  },
-  {
-    id: "proj_104",
-    projectTitle: "Clinical Analytics Enablement",
-    clientName: "AsterCare Health",
-    requirementText:
-      "Enable near-real-time analytics and reporting for clinical teams with secure data access and role-based dashboards.",
-    status: "needs_input",
-    proposalVersion: 2,
-    estimateRange: "$140k - $175k",
-    createdAt: "2026-03-03T08:15:00Z",
-    updatedAt: "2026-03-12T08:05:00Z",
-    owners: {
-      bd: "N. Roy",
-      proposalLead: "V. Iyer",
-    },
-    tags: ["healthcare", "data-platform", "reporting"],
-  },
-];
-
 export async function GET(_request: Request, context: Params) {
   const { id } = await context.params;
-  const project = projectDetails.find((item) => item.id === id);
 
-  if (!project) {
+  const pool = getRdsPool();
+  if (!pool) {
     return NextResponse.json(
-      {
-        error: {
-          code: "PROJECT_NOT_FOUND",
-          message: `Project ${id} does not exist.`,
-        },
-      },
-      { status: 404 }
+      { error: { code: "DB_ERROR", message: "Database not configured" } },
+      { status: 500 },
     );
   }
 
-  return NextResponse.json({
-    project,
-  });
+  try {
+    const { rows } = await pool.query(
+      `SELECT p.id,
+              p.project_title,
+              p.client_name,
+              p.requirement_text,
+              p.status,
+              p.created_at,
+              p.updated_at,
+              COALESCE(pr.max_version, 0) AS proposal_version
+       FROM projects p
+       LEFT JOIN (
+         SELECT thread_id, MAX(version) AS max_version
+         FROM proposals
+         GROUP BY thread_id
+       ) pr ON pr.thread_id = p.id
+       WHERE p.id = $1`,
+      [id],
+    );
+
+    if (rows.length === 0) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "PROJECT_NOT_FOUND",
+            message: `Project ${id} does not exist.`,
+          },
+        },
+        { status: 404 },
+      );
+    }
+
+    const r = rows[0];
+    return NextResponse.json({
+      project: {
+        id: r.id,
+        projectTitle: r.project_title,
+        clientName: r.client_name,
+        requirementText: r.requirement_text,
+        status: r.status,
+        proposalVersion: Number(r.proposal_version),
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      },
+    });
+  } catch (err) {
+    console.error("[api/projects/[id] GET] RDS query failed:", err);
+    return NextResponse.json(
+      { error: { code: "DB_ERROR", message: "Failed to fetch project" } },
+      { status: 500 },
+    );
+  }
 }
