@@ -439,7 +439,7 @@ export default function ProjectDetailsPage({ params }: Props) {
 
   return (
     <main className="home-shell">
-      <motion.section className="hero" initial="hidden" animate="show" variants={fadeUpMotion}>
+      <motion.section className="hero project-detail-hero" initial="hidden" animate="show" variants={fadeUpMotion}>
         <p className="hero-kicker">Project Details</p>
         <h1>
           Review project

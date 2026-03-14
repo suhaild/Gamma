@@ -129,6 +129,10 @@ body {
   );
 }
 
+.project-detail-hero {
+  overflow: visible;
+}
+
 /* Floating gradient orbs */
 .hero-orb {
   position: absolute;
