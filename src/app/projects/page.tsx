@@ -126,7 +126,7 @@ export default function ProjectsPage() {
             initial="hidden"
             animate="show"
           >
-            {items.map((item) => (
+            {items.filter((item) => item.proposalVersion > 0).map((item) => (
               <motion.article
                 key={item.id}
                 className="project-card"
