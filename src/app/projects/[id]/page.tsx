@@ -780,14 +780,14 @@ export default function ProjectDetailsPage({ params }: Props) {
                     <div className="content-modal-tabs">
                       <button
                         type="button"
-                        className={`content-modal-tab${activeContentView === "requirement" ? " active" : ""}`}
+                        className="content-modal-tab"
                         onClick={() => setActiveContentView("requirement")}
                       >
                         Requirement
                       </button>
                       <button
                         type="button"
-                        className={`content-modal-tab${activeContentView === "proposal" ? " active" : ""}`}
+                        className="content-modal-tab active"
                         onClick={() => setActiveContentView("proposal")}
                         disabled={loadingVersion || !versionedContent}
                       >
