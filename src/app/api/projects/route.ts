@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getRdsPool } from "@/lib/backend/infra/db/rds-client";
 
 const DEFAULT_AGENT_BASE_URL = "https://2mnczm8xmf.us-east-2.awsapprunner.com";
+const INITIAL_PROPOSAL_TIMEOUT_MS = 120_000;
+
+// Keep route runtime above upstream timeout to avoid platform-level termination.
+export const maxDuration = 130;
 
 function getAgentBaseUrl(): string {
   const url =
@@ -78,7 +82,7 @@ async function fetchInitialProposalFromAgent(
 ): Promise<AgentProposalResponse | null> {
   const baseUrl = getAgentBaseUrl();
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 45_000);
+  const timeoutId = setTimeout(() => controller.abort(), INITIAL_PROPOSAL_TIMEOUT_MS);
 
   try {
     const response = await fetch(`${baseUrl}/initialize`, {
