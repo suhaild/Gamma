@@ -71,7 +71,7 @@ async function createSlackChannel(
   } catch (err: unknown) {
     const slackError = err as { data?: { error?: string } };
     if (slackError.data?.error === "name_taken") {
-      const suffix = Date.now().toString(36);
+      const suffix = String(Math.floor(1000 + Math.random() * 9000));
       const retryName = sanitizeChannelName(`${name}-${suffix}`);
       const retry = await client.conversations.create({
         name: retryName,
@@ -130,9 +130,59 @@ async function persistConversation(
   );
 }
 
-export async function POST(_request: Request, context: Params) {
+export async function GET(_request: Request, context: Params) {
+  const { id } = await context.params;
+  const pool = getRdsPool();
+
+  if (!pool) {
+    return NextResponse.json({ channel: null });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT conversation_id, channel_name, created_at
+         FROM project_conversations
+        WHERE project_id = $1
+        LIMIT 1`,
+      [id],
+    );
+
+    if (result.rows.length === 0) {
+      return NextResponse.json({ channel: null });
+    }
+
+    const row = result.rows[0] as {
+      conversation_id: string;
+      channel_name: string;
+      created_at: string;
+    };
+
+    return NextResponse.json({
+      channel: {
+        conversationId: row.conversation_id,
+        channelName: row.channel_name,
+        createdAt: row.created_at,
+      },
+    });
+  } catch (err) {
+    console.error("[slack GET] DB error:", err);
+    return NextResponse.json({ channel: null });
+  }
+}
+
+export async function POST(request: Request, context: Params) {
   const { id } = await context.params;
   const now = new Date().toISOString();
+
+  let bodyUserIds: string[] = [];
+  try {
+    const body = (await request.json()) as { userIds?: string[] };
+    if (Array.isArray(body.userIds) && body.userIds.length > 0) {
+      bodyUserIds = body.userIds;
+    }
+  } catch {
+    // no body or invalid JSON — fall back to env var list
+  }
 
   const token = process.env.SLACK_BOT_TOKEN;
 
@@ -159,7 +209,7 @@ export async function POST(_request: Request, context: Params) {
 
     const channel = await createSlackChannel(slack, `proposal-${id}`);
 
-    const userIds = getInviteMemberIds();
+    const userIds = bodyUserIds.length > 0 ? bodyUserIds : getInviteMemberIds();
     const invitedCount = await inviteUsersToChannel(
       slack,
       channel.id,
