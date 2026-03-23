@@ -3,6 +3,23 @@ const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(process.cwd(), '.env.local') });
+require('dotenv').config({ path: path.resolve(process.cwd(), '.env') });
+
+/** Keep in sync with src/lib/backend/infra/db/pg-ssl.ts */
+function getPgSslOption() {
+  const v = process.env.RDS_SSL?.toLowerCase();
+  if (v === 'false' || v === '0' || v === 'no') {
+    return false;
+  }
+  if (v === 'true' || v === '1' || v === 'yes') {
+    return { rejectUnauthorized: false };
+  }
+  const host = process.env.RDS_HOST ?? '';
+  if (host.includes('.rds.amazonaws.com') || host.includes('.rds.amazonaws.com.cn')) {
+    return { rejectUnauthorized: false };
+  }
+  return false;
+}
 
 async function main() {
   const client = new Client({
@@ -11,9 +28,7 @@ async function main() {
     database: process.env.RDS_DATABASE,
     user: process.env.RDS_USERNAME,
     password: process.env.RDS_PASSWORD,
-    ssl: {
-      rejectUnauthorized: false,
-    },
+    ssl: getPgSslOption(),
   });
 
   try {

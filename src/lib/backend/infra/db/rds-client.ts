@@ -1,5 +1,7 @@
 import pg from "pg";
 
+import { getPgSslOption } from "./pg-ssl";
+
 let poolSingleton: pg.Pool | null = null;
 
 function getRdsConfig() {
@@ -37,7 +39,7 @@ export function getRdsPool(): pg.Pool | null {
 
   poolSingleton = new pg.Pool({
     ...config,
-    ssl: { rejectUnauthorized: false },
+    ssl: getPgSslOption(),
     max: 10,
     idleTimeoutMillis: 30_000,
   });
