@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getSupabaseAdminClient } from "@/lib/backend/infra/db/supabase-admin";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -161,24 +160,6 @@ async function createProposalChannelWithRetry(token: string, teamId: string, cha
     : new Error("Unable to create Teams channel after retries.");
 }
 
-async function persistSession(session: TeamsSession) {
-  const supabase = getSupabaseAdminClient();
-  if (!supabase) {
-    return;
-  }
-
-  await supabase.from("teams_sessions").insert({
-    session_id: session.sessionId,
-    project_id: session.projectId,
-    team_name: session.teamName,
-    channel_name: session.channelName,
-    thread_id: session.threadId,
-    status: session.status,
-    member_count: session.memberCount,
-    created_at: session.createdAt,
-  });
-}
-
 export async function POST(request: Request, context: Params) {
   const { id } = await context.params;
   const payload = (await request.json().catch(() => ({}))) as CreateTeamsPayload;
@@ -194,7 +175,6 @@ export async function POST(request: Request, context: Params) {
   const config = getGraphConfig();
   if (!config) {
     const session = buildMockSession(id, memberUpns.length, now);
-    await persistSession(session);
 
     return NextResponse.json(
       {
@@ -259,8 +239,6 @@ export async function POST(request: Request, context: Params) {
       provider: "microsoft-graph",
       createdAt: now,
     };
-
-    await persistSession(session);
 
     return NextResponse.json(
       {

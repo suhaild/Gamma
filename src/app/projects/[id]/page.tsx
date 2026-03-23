@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { marked } from "marked";
-import ChatPanel from "./chat/chat-panel";
 
 type ProjectDetails = {
   id: string;
@@ -73,14 +72,6 @@ const fadeUpMotion = {
     transition: { duration: 0.5 },
   },
 };
-
-function getTeamMembers(project: ProjectDetails): string[] {
-  if (!project.owners) return [];
-  const members = new Set<string>();
-  members.add(project.owners.bd);
-  members.add(project.owners.proposalLead);
-  return Array.from(members);
-}
 
 function formatRequirementText(value: string): string {
   const normalized = value
@@ -189,7 +180,6 @@ export default function ProjectDetailsPage({ params }: Props) {
   const [selectedVersion, setSelectedVersion] = useState<number>(1);
   const [loadingVersion, setLoadingVersion] = useState(false);
   const [versionedContent, setVersionedContent] = useState<ProposalContent | null>(null);
-  const [chatOpen, setChatOpen] = useState(false);
   const [existingChannel, setExistingChannel] = useState<ExistingChannel | null | undefined>(undefined);
   const [isCreatingSlack, setIsCreatingSlack] = useState(false);
   const [slackResult, setSlackResult] = useState<{ success?: string; error?: string } | null>(null);
@@ -838,14 +828,6 @@ export default function ProjectDetailsPage({ params }: Props) {
         ) : null}
       </motion.section>
 
-      {project && (
-        <ChatPanel
-          projectId={projectId}
-          teamMembers={getTeamMembers(project)}
-          open={chatOpen}
-          onClose={() => setChatOpen(false)}
-        />
-      )}
     </main>
   );
 }

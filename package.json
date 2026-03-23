@@ -8,12 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "db:test-connection": "node scripts/test-rds-connection.js",
-    "db:test-supabase": "node scripts/test-supabase-connection.mjs",
     "db:migrate": "node scripts/rds-migrate.js"
   },
   "dependencies": {
     "@slack/web-api": "^7.15.0",
-    "@supabase/supabase-js": "^2.99.1",
     "aws-sdk": "^2.1693.0",
     "framer-motion": "^12.36.0",
     "marked": "^17.0.4",
